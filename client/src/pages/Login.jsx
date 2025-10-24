@@ -1,3 +1,4 @@
+// ...existing code...
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { login } from '../store/authSlice'
@@ -6,12 +7,15 @@ import Navbar from '../components/Navbar'
 import Button from '../components/Button'
 import Card from '../components/Card'
 import { motion } from 'framer-motion'
+import { signIn as apiSignIn } from '../apiCalls/authCall' // <-- NEW: API call
+// ...existing code...
 
 const Login = () => {
   const [role, setRole] = useState('teacher')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -26,18 +30,24 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Mock auth
-    dispatch(login({
-      user: { id: 1, name: 'Mock User', email },
-      role
-    }))
-    
-    const path = role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
-    navigate(path)
+    try {
+      const data = await apiSignIn({ email, password, role })
+      // Use returned user if available
+      const user = data?.user || { id: data?.id || 1, name: data?.name || 'User', email }
+      dispatch(login({
+        user,
+        role
+      }))
+      const path = role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+      navigate(path)
+    } catch (err) {
+      const msg = (err && (err.message || err.error || JSON.stringify(err))) || 'Sign in failed'
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const roleOptions = [
@@ -80,6 +90,12 @@ const Login = () => {
                 Sign in to your account to continue
               </p>
             </div>
+
+            {error && (
+              <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Role Selection */}
@@ -159,7 +175,7 @@ const Login = () => {
               <p className="text-secondary-600 dark:text-secondary-400">
                 Don't have an account?{' '}
                 <Link 
-                  to="/signup" 
+                  to={`/signup?role=${role}`} 
                   className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold transition-colors"
                 >
                   Sign up here
@@ -184,3 +200,4 @@ const Login = () => {
 }
 
 export default Login
+// ...existing code...
