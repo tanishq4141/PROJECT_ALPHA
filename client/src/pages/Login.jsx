@@ -28,27 +28,30 @@ const Login = () => {
   }, [location.search])
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
+  
+  try {
+    const data = await apiSignIn({ email, password })
+    // Get role from backend response
+    const user = data || { id: 1, name: 'User', email, role: 'student' }
     
-    try {
-      const data = await apiSignIn({ email, password, role })
-      // Use returned user if available
-      const user = data?.user || { id: data?.id || 1, name: data?.name || 'User', email }
-      dispatch(login({
-        user,
-        role
-      }))
-      const path = role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
-      navigate(path)
-    } catch (err) {
-      const msg = (err && (err.message || err.error || JSON.stringify(err))) || 'Sign in failed'
-      setError(msg)
-    } finally {
-      setLoading(false)
-    }
+    dispatch(login({
+      user,
+      role: user.role // Use role from backend
+    }))
+
+    // Redirect based on role from backend
+    const path = user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+    navigate(path)
+  } catch (err) {
+    const msg = (err && (err.message || err.error || JSON.stringify(err))) || 'Sign in failed'
+    setError(msg)
+  } finally {
+    setLoading(false)
   }
+}
 
   const roleOptions = [
     {
