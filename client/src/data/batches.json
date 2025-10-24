@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Batch 2025-A",
+    "description": "Advanced React Cohort",
+    "students": [1, 2]
+  },
+  {
+    "id": 2,
+    "name": "Batch 2025-B",
+    "description": "Intro to JS Cohort",
+    "students": [3]
+  }
+]

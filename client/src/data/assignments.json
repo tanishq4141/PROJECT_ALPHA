@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "React Hooks Quiz",
+    "type": "MCQ",
+    "batchId": 1,
+    "questions": ["What is useState?"]
+  },
+  {
+    "id": 2,
+    "title": "JS Basics",
+    "type": "Fill in the Blanks",
+    "batchId": 2,
+    "questions": ["var x = ___;"]
+  }
+]
