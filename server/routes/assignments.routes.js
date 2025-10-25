@@ -3,7 +3,8 @@ import {
   createAssignment,
   assignAssignment,
   getStudentAssignments,
-  getTeacherAssignments
+  getTeacherAssignments,
+  submitAssignment
 } from "../controllers/assignment.controller.js";
 import { authenticate, requireTeacher } from "../middleware/auth.middleware.js";
 
@@ -14,6 +15,9 @@ router.post("/create", authenticate, requireTeacher, createAssignment);
 
 // Teacher assigns an existing assignment to student(s) or batch
 router.post("/assign", authenticate, requireTeacher, assignAssignment);
+
+// Student submits answers
+router.post("/submit", authenticate, submitAssignment);
 
 // Student or authorized user gets student assignments
 router.get("/student/:id", authenticate, getStudentAssignments);

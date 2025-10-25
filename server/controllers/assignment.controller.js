@@ -130,3 +130,59 @@ export const getTeacherAssignments = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// New: student submits answers for an assignment
+export const submitAssignment = async (req, res) => {
+  try {
+    const studentId = req.user?._id;
+    const { assignmentId, answers } = req.body;
+
+    if (!studentId) return res.status(401).json({ message: "Not authenticated" });
+    if (!assignmentId || !Array.isArray(answers)) return res.status(400).json({ message: "assignmentId and answers array required" });
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+
+    // Only students can submit
+    if (req.user.role !== "student") return res.status(403).json({ message: "Only students can submit assignments" });
+
+    // Score calculation
+    const total = assignment.questions.length || 0;
+    let correct = 0;
+    for (let i = 0; i < total; i++) {
+      const q = assignment.questions[i];
+      const provided = typeof answers[i] === "number" ? answers[i] : Number(answers[i]);
+      if (q && provided === q.correctOption) correct++;
+    }
+    const scorePercent = total === 0 ? 0 : Math.round((correct / total) * 100);
+
+    // Update user's assignments array (mark completed & set score). If not present, add it.
+    const user = await User.findById(studentId);
+    if (!user) return res.status(404).json({ message: "Student not found" });
+
+    const existing = user.assignments.find(a => String(a.assignment) === String(assignmentId));
+    if (existing) {
+      existing.status = "completed";
+      existing.score = scorePercent;
+    } else {
+      user.assignments.push({
+        assignment: assignment._id,
+        status: "completed",
+        score: scorePercent
+      });
+    }
+    await user.save();
+
+    // Optionally add to assignment.submissions or keep as-is. Return result.
+    return res.status(200).json({
+      message: "Submitted",
+      score: scorePercent,
+      totalQuestions: total,
+      correctAnswers: correct,
+      assignmentId
+    });
+  } catch (err) {
+    console.error("submitAssignment error:", err);
+    return res.status(500).json({ message: "Server error while submitting assignment" });
+  }
+};

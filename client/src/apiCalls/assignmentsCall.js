@@ -23,3 +23,21 @@ export const createAssignment = async (payload) => {
     throw err?.response?.data || err;
   }
 };
+
+export const submitAssignment = async ({ assignmentId, answers }) => {
+  try {
+    const res = await api.post("/api/assignments/submit", { assignmentId, answers });
+    return res.data;
+  } catch (err) {
+    throw err?.response?.data || err;
+  }
+};
+
+export const getTeacherAssignments = async (teacherId) => {
+  try {
+    const res = await api.get(`/api/assignments/teacher/${teacherId}`);
+    return res.data;
+  } catch (err) {
+    throw err?.response?.data || err;
+  }
+};

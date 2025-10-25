@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { createBatch, getBatches } from "../../apiCalls/batchCall";
+import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
 import BatchCard from "../../components/BatchCard";
-import Button from "../../components/Button";
 import Card from "../../components/Card";
+import Button from "../../components/Button";
+import { createBatch, getBatches } from "../../apiCalls/batchCall";
 
 const TeacherBatches = () => {
   const dispatch = useDispatch();
@@ -24,11 +24,22 @@ const TeacherBatches = () => {
   }, []);
 
   const loadBatches = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const data = await getBatches();
-      setBatches(data);
+      const res = await getBatches();
+      // backend returns { batches: [...] } — normalize to array
+      const list = Array.isArray(res) ? res : res?.batches || [];
+      setBatches(list);
     } catch (err) {
-      setError(err.message || "Failed to load batches");
+      setError(
+        err?.message ||
+          err?.message ||
+          JSON.stringify(err) ||
+          "Failed to load batches"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,33 +47,32 @@ const TeacherBatches = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       const emails = studentEmails
         .split(",")
-        .map((email) => email.trim())
-        .filter((email) => email);
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-      const newBatch = await createBatch({
+      const res = await createBatch({
         name,
         description,
         studentEmails: emails,
       });
-
-      setBatches((prev) => [...prev, newBatch]);
+      // backend returns { batch, missingEmails }
+      const newBatch = res?.batch || res;
+      setBatches((prev) => [newBatch, ...(Array.isArray(prev) ? prev : [])]);
       setShowForm(false);
-      resetForm();
+      setName("");
+      setDescription("");
+      setStudentEmails("");
+      if (res?.missingEmails && res.missingEmails.length) {
+        alert("These emails were not found: " + res.missingEmails.join(", "));
+      }
     } catch (err) {
-      setError(err.message || "Failed to create batch");
+      setError(err?.message || JSON.stringify(err) || "Failed to create batch");
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setStudentEmails("");
   };
 
   return (
@@ -70,7 +80,7 @@ const TeacherBatches = () => {
       <Navbar />
       <Sidebar role="teacher" />
 
-      <main className="ml-64 p-6 w-full min-h-screen relative">
+      <main className="ml-80 p-6 w-full min-h-screen relative">
         <h1 className="text-3xl font-bold mb-6">Batches</h1>
 
         {error && (
@@ -78,38 +88,28 @@ const TeacherBatches = () => {
             {error}
           </div>
         )}
+        {loading && <div className="mb-4">Loading...</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-          {batches.map((batch) => (
-            <BatchCard key={batch._id} batch={batch} role="teacher" />
-          ))}
+          {Array.isArray(batches) && batches.length
+            ? batches.map((batch) => (
+                <BatchCard key={batch._id} batch={batch} role="teacher" />
+              ))
+            : !loading && <div>No batches yet.</div>}
         </div>
 
-        {/* Fixed position Create Batch button */}
+        {/* Fixed Create Batch button */}
         <div className="fixed bottom-8 right-8">
           <Button
             onClick={() => setShowForm(true)}
-            className="shadow-lg bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full flex items-center gap-2"
+            className="shadow-lg bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
             Create Batch
           </Button>
         </div>
 
-        {/* Modal for create batch form */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -117,11 +117,10 @@ const TeacherBatches = () => {
                     Batch Name
                   </label>
                   <input
-                    type="text"
+                    required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full p-2 border rounded"
-                    required
                   />
                 </div>
 
@@ -133,7 +132,6 @@ const TeacherBatches = () => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full p-2 border rounded"
-                    required
                   />
                 </div>
 
@@ -145,20 +143,20 @@ const TeacherBatches = () => {
                     value={studentEmails}
                     onChange={(e) => setStudentEmails(e.target.value)}
                     className="w-full p-2 border rounded"
-                    placeholder="student1@example.com, student2@example.com"
+                    placeholder="s1@example.com, s2@example.com"
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Creating..." : "Create Batch"}
-                  </Button>
+                <div className="flex gap-2 justify-end">
                   <Button
                     type="button"
-                    onClick={() => setShowForm(false)}
                     variant="secondary"
+                    onClick={() => setShowForm(false)}
                   >
                     Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Creating..." : "Create Batch"}
                   </Button>
                 </div>
               </form>

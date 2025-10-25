@@ -1,37 +1,82 @@
-import { useSelector } from 'react-redux'
-import { useState } from 'react'
-import Navbar from '../../components/Navbar'
-import Sidebar from '../../components/Sidebar'
-import AssignmentCard from '../../components/AssignmentCard'
-import Card from '../../components/Card'
-import Button from '../../components/Button'
-import { motion } from 'framer-motion'
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import Navbar from "../../components/Navbar";
+import Sidebar from "../../components/Sidebar";
+import AssignmentCard from "../../components/AssignmentCard";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
+import { motion } from "framer-motion";
+import { getStudentAssignments } from "../../apiCalls/assignmentsCall";
 
 const StudentDashboard = () => {
-  const assignments = useSelector((state) => state.data.assignments)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pending = assignments.filter(a => !a.completed) // Mock filter
-  const completed = assignments.filter(a => a.completed) // Mock filter
+  const user = useSelector((state) => state.auth.user);
+  const studentId = user?._id || user?.id;
+  const [assignments, setAssignments] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!studentId) return;
+    getStudentAssignments(studentId)
+      .then((res) => setAssignments(res.assignments || []))
+      .catch(() => setAssignments([]));
+  }, [studentId]);
+
+  const pending = assignments.filter((a) => a.status !== "completed");
+  const completed = assignments.filter((a) => a.status === "completed");
 
   const stats = [
-    { label: 'Pending Assignments', value: pending.length, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
-    { label: 'Completed', value: completed.length, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
-    { label: 'Total Assignments', value: assignments.length, color: 'text-primary-600 dark:text-primary-400', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-    { label: 'Average Score', value: '85%', color: 'text-accent-600 dark:text-accent-400', bg: 'bg-accent-50 dark:bg-accent-900/20' }
-  ]
+    {
+      label: "Pending Assignments",
+      value: pending.length,
+      color: "text-yellow-600 dark:text-yellow-400",
+      bg: "bg-yellow-50 dark:bg-yellow-900/20",
+    },
+    {
+      label: "Completed",
+      value: completed.length,
+      color: "text-green-600 dark:text-green-400",
+      bg: "bg-green-50 dark:bg-green-900/20",
+    },
+    {
+      label: "Total Assignments",
+      value: assignments.length,
+      color: "text-primary-600 dark:text-primary-400",
+      bg: "bg-primary-50 dark:bg-primary-900/20",
+    },
+    {
+      label: "Average Score",
+      value: "85%",
+      color: "text-accent-600 dark:text-accent-400",
+      bg: "bg-accent-50 dark:bg-accent-900/20",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900">
       <Navbar />
-      <Sidebar role="student" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+      <Sidebar
+        role="student"
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(true)}
         className="lg:hidden fixed top-20 left-4 z-40 p-3 bg-white dark:bg-secondary-800 rounded-xl shadow-medium"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
 
@@ -108,7 +153,7 @@ const StudentDashboard = () => {
                 Filter
               </Button>
             </div>
-            
+
             {pending.length > 0 ? (
               <div className="space-y-4">
                 {pending.map((assignment, index) => (
@@ -141,13 +186,17 @@ const StudentDashboard = () => {
           <Card>
             <Card.Header>
               <Card.Title>Recent Activity</Card.Title>
-              <Card.Description>Your latest submissions and feedback</Card.Description>
+              <Card.Description>
+                Your latest submissions and feedback
+              </Card.Description>
             </Card.Header>
             <Card.Content>
               <div className="space-y-4">
                 <div className="flex items-center space-x-4 p-4 bg-secondary-50 dark:bg-secondary-800 rounded-xl">
                   <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 dark:text-green-400">✓</span>
+                    <span className="text-green-600 dark:text-green-400">
+                      ✓
+                    </span>
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-secondary-900 dark:text-secondary-100">
@@ -158,7 +207,7 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4 p-4 bg-secondary-50 dark:bg-secondary-800 rounded-xl">
                   <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 dark:text-blue-400">📝</span>
@@ -178,7 +227,7 @@ const StudentDashboard = () => {
         </motion.div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default StudentDashboard
+export default StudentDashboard;
