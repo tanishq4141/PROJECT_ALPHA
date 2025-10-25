@@ -8,12 +8,10 @@ import TeacherBatches from './pages/teacher/Batches'
 import TeacherAssignments from './pages/teacher/Assignments'
 import TeacherProfile from './pages/teacher/Profile'
 import StudentDashboard from './pages/student/Dashboard'
-
+import StudentAssignments from './pages/student/Assignments'
 import StudentHistory from './pages/student/History'
 import StudentProfile from './pages/student/Profile'
-import CreateAssignment from "./pages/CreateAssignment";
-import StudentAssignments from "./pages/StudentAssignments";
-// ...existing code...
+
 
 function App() {
   const { isAuthenticated, role } = useSelector((state) => state.auth)
@@ -46,8 +44,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/teacher/create-assignment" element={<CreateAssignment />} />
-        
         <Route
           path="/teacher/assignments"
           element={

@@ -6,24 +6,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export const createAssignment = async (payload) => {
-  try {
-    const res = await api.post("/api/assignments/create", payload);
-    return res.data;
-  } catch (err) {
-    throw err?.response?.data || err;
-  }
-};
-
-export const assignAssignment = async (payload) => {
-  try {
-    const res = await api.post("/api/assignments/assign", payload);
-    return res.data;
-  } catch (err) {
-    throw err?.response?.data || err;
-  }
-};
-
 export const getStudentAssignments = async (studentId) => {
   try {
     const res = await api.get(`/api/assignments/student/${studentId}`);
@@ -33,9 +15,9 @@ export const getStudentAssignments = async (studentId) => {
   }
 };
 
-export const getTeacherAssignments = async (teacherId) => {
+export const createAssignment = async (payload) => {
   try {
-    const res = await api.get(`/api/assignments/teacher/${teacherId}`);
+    const res = await api.post("/api/assignments/create", payload);
     return res.data;
   } catch (err) {
     throw err?.response?.data || err;

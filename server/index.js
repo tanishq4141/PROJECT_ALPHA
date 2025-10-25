@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRouter from './routes/auth.routes.js';
 import assignmentsRoutes from "./routes/assignments.routes.js";
+import batchRoutes from "./routes/batch.routes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(cors({
 
 app.use('/api/auth' , authRouter)
 app.use("/api/assignments", assignmentsRoutes);
+app.use("/api/batches", batchRoutes);
 
 
 
